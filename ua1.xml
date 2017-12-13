@@ -1,0 +1,8 @@
+<config>
+    <account username="ana" passwd="idhun"/>
+    <uaserver puerto="6001"/>
+    <rtpaudio puerto="5060"/>
+    <regproxy/>
+    <log/>
+    <audio/>
+</config>
