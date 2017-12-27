@@ -3,8 +3,40 @@
 
 import socketserver
 import sys
-import uaclient
+from xml.sax import make_parser
+from xml.sax.handler import ContentHandler
 
+
+class Proxyxmlhandler(ContentHandler):
+
+    def __init__(self):
+        """
+        Constructor. Inicializamos las variables
+        """
+        self.etiquetas = []
+        self.lista_etiq = ["server", "database", "log"]
+        self.coleccion_attr = {'server': ['name','ip', 'puerto'],
+                               'database': ['path', 'passwdpath'],
+                               'log': ['path']}
+    def startElement(self, element, attrs):
+
+        if element in self.lista_etiq:
+            Dict = {}
+            Dict['element'] = element
+            for atributo in self.coleccion_attr[element]:
+                Dict[atributo] = attrs.get(atributo, "")
+            self.etiquetas.append(Dict)
+
+    def get_tags(self):
+        return self.etiquetas
+
+def parsercreator(xml):
+    parser = make_parser()
+    proxyhandler = Proxyxmlhandler()
+    parser.setContentHandler(proxyhandler)
+    parser.parse(open(xml))
+    return (proxyhandler.get_tags())
+    
 class EchoHandler(socketserver.DatagramRequestHandler):
     """
     Echo server class
@@ -22,12 +54,11 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         sys.exit('Usage: python3 uaserver.py config')
 
-    datos = uaclient.parsercreator(sys.argv[1])
+    datos = parsercreator(sys.argv[1])
     print(datos)
-    IP = datos[1]['ip']
-    if IP == '':
-        IP = '127.0.0.1'
-    PORT = int(datos[1]['puerto'])
+    
+    IP = datos[0]['ip']
+    PORT = int(datos[0]['puerto'])
     serv = socketserver.UDPServer((IP, PORT), EchoHandler)
     print("Lanzando servidor UDP de eco...")
     serv.serve_forever()
