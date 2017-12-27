@@ -38,16 +38,30 @@ def parsercreator(xml):
     return (proxyhandler.get_tags())
     
 class EchoHandler(socketserver.DatagramRequestHandler):
+
     """
     Echo server class
     """
-
+    Users = []
+    DATA = []
     def handle(self):
         # Escribe dirección y puerto del cliente (de tupla client_address)
+        DATA = []
         for line in self.rfile:
+            DATA.append(line.decode('utf-8'))
+        print(DATA)
 
-            if line[:8].decode('utf-8') == 'REGISTER':
-                print(line.decode('utf-8'))
+        if DATA[0].split(' ')[0] == 'REGISTER':
+            print("Entra en register")
+            username = DATA[0].split(':')[1]
+            print(username)
+            if username in self.Users:
+                print("Enviamos 200 OK")
+            else:
+                if DATA[2].split(':')[0] =='Authorzation':
+                    print('check nonce')
+                else:
+                    print('Enviamos 401 unauthorized')
                 
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
