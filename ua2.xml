@@ -1,0 +1,8 @@
+<config>
+    <account username="maria" passwd="idhun"/>
+    <uaserver puerto="6003"/>
+    <rtpaudio puerto="5060"/>
+    <regproxy ip="127.0.0.1" puerto="6001"/>
+    <log/>
+    <audio/>
+</config>
