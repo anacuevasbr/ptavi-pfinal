@@ -1,0 +1,5 @@
+<config>
+    <server name="miservidor" ip="127.0.0.1" puerto="6001"/>
+    <database path="ptavi/ptavi-pfinal/proxy" passwdpath="Ridkulus"/>
+    <log path="ptavi/ptavi-pfinal/proxylog"/>
+</config>
