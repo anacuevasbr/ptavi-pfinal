@@ -58,7 +58,12 @@ if __name__ == "__main__":
     if SERVERIP == '':
         SERVERIP = '127.0.0.1'
     SERVERPORT = int(datos[1]['puerto'])
-
+    PROXYIP= datos[3]['ip']
+    if PROXYIP == '':
+        PROXYIP = '127.0.0.1'
+    PROXYPORT = int(datos[3]['puerto'])
+    print(PROXYIP)
+    print(PROXYPORT)
     # Contenido que vamos a enviar
     if METHOD == 'REGISTER':
         Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n\r\n'
@@ -66,7 +71,7 @@ if __name__ == "__main__":
     # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        my_socket.connect((SERVERIP, SERVERPORT))
+        my_socket.connect((PROXYIP, PROXYPORT))
 
         my_socket.send(bytes(Message, 'utf-8'))
         data = my_socket.recv(1024)
