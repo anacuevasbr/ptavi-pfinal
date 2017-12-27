@@ -76,4 +76,5 @@ if __name__ == "__main__":
         my_socket.send(bytes(Message, 'utf-8'))
         data = my_socket.recv(1024)
         Message = data.decode('utf-8')
+        print(Message)
 
