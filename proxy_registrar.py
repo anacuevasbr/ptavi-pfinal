@@ -50,15 +50,13 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     
     def ExpiresCheck(self):
         
-        timenow = time.strftime('%Y-%m-%d %H:%M:%S',
-                                time.gmtime(time.time()))
         Delete = []
         for User in self.DicUsers:
-            if str(self.DicUsers[User][1]) <= timenow:
+            if str(self.DicUsers[User][1]) <= str(time.time()):
                 Delete.append(User)
         for User in Delete:
             del self.DicUsers[User]
-            print('eliminado' + User)
+            print('eliminado ' + User)
     
     def RegisterManager(self, Data):
     
