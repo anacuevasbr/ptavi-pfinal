@@ -41,6 +41,33 @@ def parsercreator(xml):
     parser.parse(open(xml))
     return (uahandler.get_tags())
 
+def RecieveRegister():
+    
+    data = my_socket.recv(1024).decode('utf-8')
+
+    if data.split(' ')[1] == '401':
+        print('Recibido 401')
+        NONCE = data.split('=')[1]
+        Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n' + 'Authorization: Digest response=' + NONCE + '\r\n\r\n'
+        my_socket.send(bytes(Message, 'utf-8'))
+        RecieveRegister()
+    elif data.split(' ')[1] == '200':
+        print('Recibido 200 ok')
+
+
+def ManageRegister(datos):
+    
+    USER = datos[0]['username']
+    SERVERPORT = int(datos[1]['puerto'])
+
+    Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n\r\n'
+
+    my_socket.send(bytes(Message, 'utf-8'))
+
+    #Recibimos respuesta
+    RecieveRegister()
+
+
 if __name__ == "__main__":
     """
     Programa principal
@@ -49,7 +76,6 @@ if __name__ == "__main__":
         sys.exit('Usage: python3 uaclient.py config metodo opcion')
 
     datos = parsercreator(sys.argv[1])
-    print(datos)
 
     #Separramos las variables que necesitamos
     USER = datos[0]['username']
@@ -63,11 +89,6 @@ if __name__ == "__main__":
     if PROXYIP == '':
         PROXYIP = '127.0.0.1'
     PROXYPORT = int(datos[3]['puerto'])
-    print(PROXYIP)
-    print(PROXYPORT)
-    # Contenido que vamos a enviar
-    if METHOD == 'REGISTER':
-        Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n\r\n'
 
     # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
@@ -76,22 +97,5 @@ if __name__ == "__main__":
         
         #Generamos mensajes a partir del método
         if METHOD == 'REGISTER':
-            Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n\r\n'
+            ManageRegister(datos)
 
-        my_socket.send(bytes(Message, 'utf-8'))
-        
-        #Recibimos respuesta
-        data = my_socket.recv(1024)
-        Message = data.decode('utf-8')
-        print(Message)
-        
-        if Message.split(' ')[1] == '401':
-            NONCE = Message.split('=')[1]
-            Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n' + 'Authorization: Digest response=' + NONCE + '\r\n\r\n'
-            my_socket.send(bytes(Message, 'utf-8'))
-            data = my_socket.recv(1024)
-            Message = data.decode('utf-8')
-            if Message.split(' ')[1] == '200':
-                print('Recibido 200 ok')
-        elif Message.split(' ')[1] == '200':
-            print('Recibido 200 ok')
