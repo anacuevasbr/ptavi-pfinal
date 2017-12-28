@@ -3,6 +3,7 @@
 
 import socketserver
 import sys
+import time
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 
@@ -42,41 +43,56 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     """
     Echo server class
     """
-    Users = []
-    DATA = []
+    DicUsers = {} #Aquí se van a guardar los usuarios, es undicconario
+                  #de listas donde la clave es el
+                  #nombre de usuario,  y le primer elemento de la listae es
+                  #el puerto en el que escucha y el segundo su fecha de expiración
     
-    def RegisterManager(self):
-        NONCE = b'123456789'
+    def ExpiresCheck(self):
         
-        username = self.DATA[0].split(':')[1]
-        print(username)
-        if username in self.Users:
-            print("Enviamos 200 OK y cambiamos expiración")
+        timenow = time.strftime('%Y-%m-%d %H:%M:%S',
+                                time.gmtime(time.time()))
+        Delete = []
+        for User in self.DicUsers:
+            if str(self.DicUsers[User][1]) <= timenow:
+                Delete.append(User)
+        for User in Delete:
+            del self.DicUsers[User]
+            print('eliminado' + User)
+    
+    def RegisterManager(self, Data):
+    
+        NONCE = b'123456789'        
+        username = Data[0].split(':')[1]
+        serverport = Data[0].split(':')[2].split(' ')[0]
+        expires = time.time() + float(Data[1].split(' ')[1].split('\r')[0])
+        
+        self.ExpiresCheck()
+        print(self.DicUsers)
+        
+        if username in self.DicUsers:
             self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+            self.DicUsers[username][1] = expires
         else:
-            if self.DATA[2].split(':')[0] =='Authorization':
-                print('check nonce')
-                print(self.DATA[2].split('=')[1].split('\r')[0])
-                if self.DATA[2].split('=')[1].split('\r')[0] == NONCE.decode('utf-8'):
-                    print('NONCE correcto')
+            if Data[2].split(':')[0] =='Authorization':
+                if Data[2].split('=')[1].split('\r')[0] == NONCE.decode('utf-8'):
                     self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-                    self.Users.append(username)
-                    print(self.Users)
+                    self.DicUsers[username]=[serverport,expires]
+                    print(self.DicUsers)
             else:
-                print('Enviamos 401 unauthorized')
                 Message = b"SIP/2.0 401 Unauthorized" + b'\r\n' + b"WWW Authenticate: Digest nonce=" + NONCE
                 self.wfile.write(Message)
                 
     def handle(self):
-        # Escribe dirección y puerto del cliente (de tupla client_address)
-        self.DATA = []
-        #NONCE = b'123456789'
+        
+        DATA = []
+        
         for line in self.rfile:
-            self.DATA.append(line.decode('utf-8'))
-        print(self.DATA)
+            DATA.append(line.decode('utf-8'))
+        print(DATA)
 
-        if self.DATA[0].split(' ')[0] == 'REGISTER':
-            self.RegisterManager()
+        if DATA[0].split(' ')[0] == 'REGISTER':
+            self.RegisterManager(DATA)
 
                 
 if __name__ == "__main__":
