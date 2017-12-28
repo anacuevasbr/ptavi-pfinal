@@ -51,6 +51,7 @@ if __name__ == "__main__":
     datos = parsercreator(sys.argv[1])
     print(datos)
 
+    #Separramos las variables que necesitamos
     USER = datos[0]['username']
     PASSWORD = datos[0]['passwd']
     METHOD = sys.argv[2]
@@ -72,9 +73,25 @@ if __name__ == "__main__":
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         my_socket.connect((PROXYIP, PROXYPORT))
+        
+        #Generamos mensajes a partir del método
+        if METHOD == 'REGISTER':
+            Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n\r\n'
 
         my_socket.send(bytes(Message, 'utf-8'))
+        
+        #Recibimos respuesta
         data = my_socket.recv(1024)
         Message = data.decode('utf-8')
         print(Message)
-
+        
+        if Message.split(' ')[1] == '401':
+            NONCE = Message.split('=')[1]
+            Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n' + 'Authorization: Digest response=' + NONCE + '\r\n\r\n'
+            my_socket.send(bytes(Message, 'utf-8'))
+            data = my_socket.recv(1024)
+            Message = data.decode('utf-8')
+            if Message.split(' ')[1] == '200':
+                print('Recibido 200 ok')
+        elif Message.split(' ')[1] == '200':
+            print('Recibido 200 ok')
