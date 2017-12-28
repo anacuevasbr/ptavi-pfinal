@@ -62,6 +62,10 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             else:
                 if DATA[2].split(':')[0] =='Authorization':
                     print('check nonce')
+                    print(DATA[2].split('=')[1].split('\r')[0])
+                    if DATA[2].split('=')[1].split('\r')[0] == NONCE.decode('utf-8'):
+                        print('NONCE correcto')
+                        self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
                 else:
                     print('Enviamos 401 unauthorized')
                     Message = b"SIP/2.0 401 Unauthorized" + b'\r\n' + b"WWW Authenticate: Digest nonce=" + NONCE
