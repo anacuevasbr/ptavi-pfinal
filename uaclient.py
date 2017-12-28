@@ -44,8 +44,8 @@ def parsercreator(xml):
 def RecieveRegister():
     
     data = my_socket.recv(1024).decode('utf-8')
-    print(data)
-    if data.split(' ')[1] == '401':
+    
+    if data.split(' ')[1] == '401':        
         print('Recibido 401')
         NONCE = data.split('=')[1]
         Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n' + 'Authorization: Digest response=' + NONCE + '\r\n\r\n'
