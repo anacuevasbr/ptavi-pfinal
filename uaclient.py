@@ -44,7 +44,7 @@ def parsercreator(xml):
 def RecieveRegister():
     
     data = my_socket.recv(1024).decode('utf-8')
-
+    print(data)
     if data.split(' ')[1] == '401':
         print('Recibido 401')
         NONCE = data.split('=')[1]
