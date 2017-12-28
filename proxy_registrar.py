@@ -43,35 +43,41 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     Echo server class
     """
     Users = []
-
+    DATA = []
+    
+    def RegisterManager(self):
+        NONCE = b'123456789'
+        
+        username = self.DATA[0].split(':')[1]
+        print(username)
+        if username in self.Users:
+            print("Enviamos 200 OK y cambiamos expiración")
+            self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+        else:
+            if self.DATA[2].split(':')[0] =='Authorization':
+                print('check nonce')
+                print(self.DATA[2].split('=')[1].split('\r')[0])
+                if self.DATA[2].split('=')[1].split('\r')[0] == NONCE.decode('utf-8'):
+                    print('NONCE correcto')
+                    self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+                    self.Users.append(username)
+                    print(self.Users)
+            else:
+                print('Enviamos 401 unauthorized')
+                Message = b"SIP/2.0 401 Unauthorized" + b'\r\n' + b"WWW Authenticate: Digest nonce=" + NONCE
+                self.wfile.write(Message)
+                
     def handle(self):
         # Escribe dirección y puerto del cliente (de tupla client_address)
-        DATA = []
-        NONCE = b'123456789'
+        self.DATA = []
+        #NONCE = b'123456789'
         for line in self.rfile:
-            DATA.append(line.decode('utf-8'))
-        print(DATA)
+            self.DATA.append(line.decode('utf-8'))
+        print(self.DATA)
 
-        if DATA[0].split(' ')[0] == 'REGISTER':
-            print("Entra en register")
-            username = DATA[0].split(':')[1]
-            print(username)
-            if username in self.Users:
-                print("Enviamos 200 OK y cambiamos expiración")
-                self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-            else:
-                if DATA[2].split(':')[0] =='Authorization':
-                    print('check nonce')
-                    print(DATA[2].split('=')[1].split('\r')[0])
-                    if DATA[2].split('=')[1].split('\r')[0] == NONCE.decode('utf-8'):
-                        print('NONCE correcto')
-                        self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-                        self.Users.append(username)
-                        print(self.Users)
-                else:
-                    print('Enviamos 401 unauthorized')
-                    Message = b"SIP/2.0 401 Unauthorized" + b'\r\n' + b"WWW Authenticate: Digest nonce=" + NONCE
-                    self.wfile.write(Message)
+        if self.DATA[0].split(' ')[0] == 'REGISTER':
+            self.RegisterManager()
+
                 
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
@@ -79,8 +85,7 @@ if __name__ == "__main__":
         sys.exit('Usage: python3 uaserver.py config')
 
     datos = parsercreator(sys.argv[1])
-    print(datos)
-    
+
     IP = datos[0]['ip']
     PORT = int(datos[0]['puerto'])
     serv = socketserver.UDPServer((IP, PORT), EchoHandler)
