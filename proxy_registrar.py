@@ -81,6 +81,17 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 Message = b"SIP/2.0 401 Unauthorized" + b'\r\n' + b"WWW Authenticate: Digest nonce=" + NONCE
                 self.wfile.write(Message)
                 
+    def InviteManager(self, DATA):
+        print('recibe invite')
+        self.ExpiresCheck()
+        if DATA[4].split('=')[1].split(' ')[0] in self.DicUsers:
+            if DATA[0].split(':')[1].split(' ')[0] in self.DicUsers:
+                print('Encontrado servidor')
+            else:
+                self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+        else:
+            self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+                    
     def handle(self):
         
         DATA = []
@@ -91,7 +102,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
         if DATA[0].split(' ')[0] == 'REGISTER':
             self.RegisterManager(DATA)
-
+        elif DATA[0].split(' ')[0] == 'INVITE':
+            self.InviteManager(DATA)
                 
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
