@@ -67,6 +67,16 @@ def ManageRegister(datos):
     #Recibimos respuesta
     RecieveRegister()
 
+def ManageInvite(datos):
+    
+    USER = datos[0]['username']
+    SERVERPORT = int(datos[1]['puerto'])
+
+    Message = 'INVITE sip:' + sys.argv[3] + ' SIP/2.0\r\n' + 'Content-Type: application/sdp\r\n\r\n' + 'v=0\r\n' + 'o=' + USER + ' 127.0.0.1\r\n' + 's=misesion\r\n' + 't=0\r\n' + 'm=audio ' + datos[2]['puerto'] + 'RTP\r\n'
+
+    my_socket.send(bytes(Message, 'utf-8'))
+    data = my_socket.recv(1024).decode('utf-8')
+    print(data)
 
 if __name__ == "__main__":
     """
@@ -98,4 +108,6 @@ if __name__ == "__main__":
         #Generamos mensajes a partir del método
         if METHOD == 'REGISTER':
             ManageRegister(datos)
+        elif METHOD == 'INVITE':
+            ManageInvite(datos)
 
