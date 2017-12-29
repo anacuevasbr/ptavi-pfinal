@@ -23,7 +23,9 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             self.wfile.write(b"SIP/2.0 100 Trying\r\n\r\n")
             self.wfile.write(b"SIP/2.0 180 Ringing\r\n\r\n")
             self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-                
+        elif DATA[0].split(' ')[0] == 'ACK':
+            print('Recibido ACK')
+
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
     if len(sys.argv) != 2:
