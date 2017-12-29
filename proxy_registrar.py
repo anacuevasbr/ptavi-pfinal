@@ -67,8 +67,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         expires = time.time() + float(Data[1].split(' ')[1].split('\r')[0])
         
         self.ExpiresCheck()
-        print(self.DicUsers)
-        
+
         if username in self.DicUsers:
             self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
             self.DicUsers[username][1] = expires
@@ -77,7 +76,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 if Data[2].split('=')[1].split('\r')[0] == NONCE.decode('utf-8'):
                     self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
                     self.DicUsers[username]=[serverport,expires]
-                    print(self.DicUsers)
             else:
                 Message = b"SIP/2.0 401 Unauthorized" + b'\r\n' + b"WWW Authenticate: Digest nonce=" + NONCE
                 self.wfile.write(Message)
@@ -85,7 +83,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     def ReceivefromServer(self, my_socket):
         
         data = my_socket.recv(1024).decode('utf-8')
-
+        print(data)
         if data.split(' ')[5] == '200':
             self.wfile.write(b"SIP/2.0 100 Trying\r\n\r\n")
             self.wfile.write(b"SIP/2.0 180 Ringing\r\n\r\n")
@@ -99,7 +97,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             
             Message= ''.join(DATA)
             my_socket.send(bytes(Message, 'utf-8'))
-            self.ReceivefromServer(my_socket)
+            if DATA[0].split(' ')[0] == 'INVITE':
+                self.ReceivefromServer(my_socket)
             
     def InviteManager(self, DATA):
         print('recibe invite')
@@ -113,7 +112,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
         else:
             self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
-                    
+
+
     def handle(self):
         
         DATA = []
@@ -126,6 +126,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             self.RegisterManager(DATA)
         elif DATA[0].split(' ')[0] == 'INVITE':
             self.InviteManager(DATA)
+        elif DATA[0].split(' ')[0] == 'ACK':
+            self.SendtoServer(DATA)
                 
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
