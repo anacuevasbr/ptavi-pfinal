@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import socket
 import socketserver
 import sys
 import time
@@ -81,12 +82,33 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 Message = b"SIP/2.0 401 Unauthorized" + b'\r\n' + b"WWW Authenticate: Digest nonce=" + NONCE
                 self.wfile.write(Message)
                 
+    def ReceivefromServer(self, my_socket):
+        
+        data = my_socket.recv(1024).decode('utf-8')
+
+        if data.split(' ')[5] == '200':
+            self.wfile.write(b"SIP/2.0 100 Trying\r\n\r\n")
+            self.wfile.write(b"SIP/2.0 180 Ringing\r\n\r\n")
+            self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+            
+    def SendtoServer(self, DATA):
+        userserv = DATA[0].split(':')[1].split(' ')[0]
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
+            my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            my_socket.connect(('127.0.0.1', int(self.DicUsers[userserv][0])))
+            
+            Message= ''.join(DATA)
+            my_socket.send(bytes(Message, 'utf-8'))
+            self.ReceivefromServer(my_socket)
+            
     def InviteManager(self, DATA):
         print('recibe invite')
         self.ExpiresCheck()
         if DATA[4].split('=')[1].split(' ')[0] in self.DicUsers:
             if DATA[0].split(':')[1].split(' ')[0] in self.DicUsers:
                 print('Encontrado servidor')
+                self.SendtoServer(DATA)
+ 
             else:
                 self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
         else:
