@@ -77,7 +77,10 @@ def ManageInvite(datos):
     my_socket.send(bytes(Message, 'utf-8'))
     data = my_socket.recv(1024).decode('utf-8')
     print(data)
-
+    if data.split(' ')[5] == '200':
+        Message = 'ACK sip:' + sys.argv[3] +' SIP/2.0\r\n\r\n'
+        my_socket.send(bytes(Message, 'utf-8'))
+        
 if __name__ == "__main__":
     """
     Programa principal
