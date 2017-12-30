@@ -1,8 +1,8 @@
 <config>
     <account username="maria" passwd="idhun"/>
     <uaserver puerto="6003"/>
-    <rtpaudio puerto="5060"/>
+    <rtpaudio puerto="5061"/>
     <regproxy ip="127.0.0.1" puerto="6001"/>
     <log/>
-    <audio/>
+    <audio path="cancion.mp3"/>
 </config>
