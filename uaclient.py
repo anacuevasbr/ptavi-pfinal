@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import os
 import socket
 import sys
 from xml.sax import make_parser
@@ -66,13 +67,20 @@ def ManageRegister(datos):
 
     #Recibimos respuesta
     RecieveRegister()
+def SendRTP(datos, DATA):
+
+    ServerIP = DATA.split('\r\n')[8].split(' ')[1]
+    ServerRTPPort = DATA.split('\r\n')[11].split(' ')[1]
+    audio = datos[5]['path']
+    order = "./mp32rtp -i " + ServerIP + " -p " + ServerRTPPort + " < " + audio
+    os.system(order)
 
 def ManageInvite(datos):
     
     USER = datos[0]['username']
     SERVERPORT = int(datos[1]['puerto'])
 
-    Message = 'INVITE sip:' + sys.argv[3] + ' SIP/2.0\r\n' + 'Content-Type: application/sdp\r\n\r\n' + 'v=0\r\n' + 'o=' + USER + ' 127.0.0.1\r\n' + 's=misesion\r\n' + 't=0\r\n' + 'm=audio ' + datos[2]['puerto'] + 'RTP\r\n'
+    Message = 'INVITE sip:' + sys.argv[3] + ' SIP/2.0\r\n' + 'Content-Type: application/sdp\r\n\r\n' + 'v=0\r\n' + 'o=' + USER + ' 127.0.0.1\r\n' + 's=misesion\r\n' + 't=0\r\n' + 'm=audio ' + datos[2]['puerto'] + ' RTP\r\n'
 
     my_socket.send(bytes(Message, 'utf-8'))
     data = my_socket.recv(1024).decode('utf-8')
@@ -80,6 +88,7 @@ def ManageInvite(datos):
     if data.split(' ')[5] == '200':
         Message = 'ACK sip:' + sys.argv[3] +' SIP/2.0\r\n\r\n'
         my_socket.send(bytes(Message, 'utf-8'))
+        SendRTP(datos, data)
         
 if __name__ == "__main__":
     """
