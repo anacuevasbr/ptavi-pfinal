@@ -6,13 +6,14 @@ import socketserver
 import sys
 import uaclient
 
+
 class EchoHandler(socketserver.DatagramRequestHandler):
     """
     Echo server class
     """
     ClientIP = ''
     ClientRTPPort = ''
-    
+
     def SafeRTPData(self, DATA):
 
         ClientIP = DATA[4].split(' ')[1]
@@ -23,11 +24,11 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         DATA = []
         datos = uaclient.parsercreator(sys.argv[1])
         USER = datos[0]['username']
-        
+
         for line in self.rfile:
             DATA.append(line.decode('utf-8'))
         print(DATA)
-        
+
         if DATA[0].split(' ')[0] == 'INVITE':
             self.SafeRTPData(DATA)
             print('Respondiendo a invite')
@@ -47,7 +48,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         elif DATA[0].split(' ')[0] == 'BYE':
             print('Recibido bye')
             self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-            
+
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
     if len(sys.argv) != 2:
