@@ -67,6 +67,7 @@ def ManageRegister(datos):
 
     #Recibimos respuesta
     RecieveRegister()
+    
 def SendRTP(datos, DATA):
 
     ServerIP = DATA.split('\r\n')[8].split(' ')[1]
@@ -89,7 +90,14 @@ def ManageInvite(datos):
         Message = 'ACK sip:' + sys.argv[3] +' SIP/2.0\r\n\r\n'
         my_socket.send(bytes(Message, 'utf-8'))
         SendRTP(datos, data)
-        
+
+def ManageBye():
+    
+    Message = 'BYE sip:' + sys.argv[3] + ' SIP/2.0\r\n\r\n'
+    my_socket.send(bytes(Message, 'utf-8'))
+    data = my_socket.recv(1024).decode('utf-8')
+    print(data)
+
 if __name__ == "__main__":
     """
     Programa principal
@@ -122,4 +130,6 @@ if __name__ == "__main__":
             ManageRegister(datos)
         elif METHOD == 'INVITE':
             ManageInvite(datos)
+        elif METHOD == 'BYE':
+            ManageBye()
 
