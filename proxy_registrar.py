@@ -82,12 +82,11 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 
     def ReceivefromServer(self, my_socket):
         
-        data = my_socket.recv(1024).decode('utf-8')
-        print(data)
-        if data.split(' ')[5] == '200':
-            self.wfile.write(b"SIP/2.0 100 Trying\r\n\r\n")
-            self.wfile.write(b"SIP/2.0 180 Ringing\r\n\r\n")
-            self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+        data = my_socket.recv(1024)
+        datadec = data.decode('utf-8')
+        print(datadec)
+        if datadec.split(' ')[5] == '200':
+            self.wfile.write(data)
             
     def SendtoServer(self, DATA):
         userserv = DATA[0].split(':')[1].split(' ')[0]
