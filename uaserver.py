@@ -44,7 +44,10 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             print('Recibido ACK')
             audio = datos[5]['path']
             order = "./mp32rtp -i " + self.ClientIP + " -p " + self.ClientRTPPort + " < " + audio
-
+        elif DATA[0].split(' ')[0] == 'BYE':
+            print('Recibido bye')
+            self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+            
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
     if len(sys.argv) != 2:
