@@ -23,6 +23,7 @@ class UAxmlhandler(ContentHandler):
                                'regproxy': ['ip', 'puerto'],
                                'log': ['path'],
                                'audio': ['path']}
+
     def startElement(self, element, attrs):
 
         if element in self.lista_etiq:
@@ -35,6 +36,7 @@ class UAxmlhandler(ContentHandler):
     def get_tags(self):
         return self.etiquetas
 
+
 def parsercreator(xml):
     parser = make_parser()
     uahandler = UAxmlhandler()
@@ -42,11 +44,12 @@ def parsercreator(xml):
     parser.parse(open(xml))
     return (uahandler.get_tags())
 
+
 def RecieveRegister():
-    
+
     data = my_socket.recv(1024).decode('utf-8')
-    
-    if data.split(' ')[1] == '401':        
+
+    if data.split(' ')[1] == '401':
         print('Recibido 401')
         NONCE = data.split('=')[1]
         Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n' + 'Authorization: Digest response=' + NONCE + '\r\n\r\n'
@@ -57,7 +60,7 @@ def RecieveRegister():
 
 
 def ManageRegister(datos):
-    
+
     USER = datos[0]['username']
     SERVERPORT = int(datos[1]['puerto'])
 
@@ -67,7 +70,8 @@ def ManageRegister(datos):
 
     #Recibimos respuesta
     RecieveRegister()
-    
+
+
 def SendRTP(datos, DATA):
 
     ServerIP = DATA.split('\r\n')[8].split(' ')[1]
@@ -76,8 +80,9 @@ def SendRTP(datos, DATA):
     order = "./mp32rtp -i " + ServerIP + " -p " + ServerRTPPort + " < " + audio
     os.system(order)
 
+
 def ManageInvite(datos):
-    
+
     USER = datos[0]['username']
     SERVERPORT = int(datos[1]['puerto'])
 
@@ -87,9 +92,10 @@ def ManageInvite(datos):
     data = my_socket.recv(1024).decode('utf-8')
     print(data)
     if data.split(' ')[5] == '200':
-        Message = 'ACK sip:' + sys.argv[3] +' SIP/2.0\r\n\r\n'
+        Message = 'ACK sip:' + sys.argv[3] + ' SIP/2.0\r\n\r\n'
         my_socket.send(bytes(Message, 'utf-8'))
         SendRTP(datos, data)
+
 
 def ManageBye():
     
@@ -124,7 +130,7 @@ if __name__ == "__main__":
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         my_socket.connect((PROXYIP, PROXYPORT))
-        
+
         #Generamos mensajes a partir del método
         if METHOD == 'REGISTER':
             ManageRegister(datos)
@@ -132,4 +138,3 @@ if __name__ == "__main__":
             ManageInvite(datos)
         elif METHOD == 'BYE':
             ManageBye()
-
