@@ -80,12 +80,20 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 Message = b"SIP/2.0 401 Unauthorized" + b'\r\n' + b"WWW Authenticate: Digest nonce=" + NONCE
                 self.wfile.write(Message)
                 
-    def ReceivefromServer(self, my_socket):
+    def ReceiveAnsInvite(self, my_socket):
         
         data = my_socket.recv(1024)
         datadec = data.decode('utf-8')
         print(datadec)
         if datadec.split(' ')[5] == '200':
+            self.wfile.write(data)
+            
+    def ReceiveAnsBye(self, my_socket):
+        
+        data = my_socket.recv(1024)
+        datadec = data.decode('utf-8')
+        print(datadec)
+        if datadec.split(' ')[1] == '200':
             self.wfile.write(data)
             
     def SendtoServer(self, DATA):
@@ -97,7 +105,9 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             Message= ''.join(DATA)
             my_socket.send(bytes(Message, 'utf-8'))
             if DATA[0].split(' ')[0] == 'INVITE':
-                self.ReceivefromServer(my_socket)
+                self.ReceiveAnsInvite(my_socket)
+            elif DATA[0].split(' ')[0] == 'BYE':
+                self.ReceiveAnsBye(my_socket)
             
     def InviteManager(self, DATA):
         print('recibe invite')
@@ -126,8 +136,18 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         elif DATA[0].split(' ')[0] == 'INVITE':
             self.InviteManager(DATA)
         elif DATA[0].split(' ')[0] == 'ACK':
-            self.SendtoServer(DATA)
-                
+            if DATA[0].split(':')[1].split(' ')[0] in self.DicUsers:
+                self.SendtoServer(DATA)
+            else:
+                self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+
+        elif DATA[0].split(' ')[0] == 'BYE':
+            if DATA[0].split(':')[1].split(' ')[0] in self.DicUsers:
+                self.SendtoServer(DATA)
+            else:
+                self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+
+            
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
     if len(sys.argv) != 2:
