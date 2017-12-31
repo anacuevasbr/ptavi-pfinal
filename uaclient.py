@@ -4,6 +4,7 @@
 import os
 import socket
 import sys
+import uaserver
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 
@@ -50,14 +51,19 @@ def RecieveRegister():
     data = my_socket.recv(1024).decode('utf-8')
 
     if data.split(' ')[1] == '401':
+        Message = 'Received ' + data.replace('\r\n', ' ') + '\r\n'
+        uaserver.AddtoLog(datos[4]['path'], Message)
         print('Recibido 401')
         NONCE = data.split('=')[1]
         Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n' + 'Authorization: Digest response=' + NONCE + '\r\n\r\n'
         my_socket.send(bytes(Message, 'utf-8'))
+        Message = 'Send ' + Message.replace('\r\n', ' ') + '\r\n'
+        uaserver.AddtoLog(datos[4]['path'], Message)
         RecieveRegister()
     elif data.split(' ')[1] == '200':
         print('Recibido 200 ok')
-
+        Message = 'Received ' + data.replace('\r\n', ' ') + '\r\n'
+        uaserver.AddtoLog(datos[4]['path'], Message)
 
 def ManageRegister(datos):
 
@@ -67,7 +73,8 @@ def ManageRegister(datos):
     Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n\r\n'
 
     my_socket.send(bytes(Message, 'utf-8'))
-
+    Message = 'Send ' + Message.replace('\r\n', ' ') + '\r\n'
+    uaserver.AddtoLog(datos[4]['path'], Message)
     #Recibimos respuesta
     RecieveRegister()
 
@@ -89,11 +96,18 @@ def ManageInvite(datos):
     Message = 'INVITE sip:' + sys.argv[3] + ' SIP/2.0\r\n' + 'Content-Type: application/sdp\r\n\r\n' + 'v=0\r\n' + 'o=' + USER + ' 127.0.0.1\r\n' + 's=misesion\r\n' + 't=0\r\n' + 'm=audio ' + datos[2]['puerto'] + ' RTP\r\n'
 
     my_socket.send(bytes(Message, 'utf-8'))
+    Message = 'Send ' + Message.replace('\r\n', ' ') + '\r\n'
+    uaserver.AddtoLog(datos[4]['path'], Message)
+    
     data = my_socket.recv(1024).decode('utf-8')
+    Message = 'Received ' + data.replace('\r\n', ' ') + '\r\n'
+    uaserver.AddtoLog(datos[4]['path'], Message)
     print(data)
     if data.split(' ')[5] == '200':
         Message = 'ACK sip:' + sys.argv[3] + ' SIP/2.0\r\n\r\n'
         my_socket.send(bytes(Message, 'utf-8'))
+        Message = 'Send ' + Message.replace('\r\n', ' ') + '\r\n'
+        uaserver.AddtoLog(datos[4]['path'], Message)
         SendRTP(datos, data)
 
 
