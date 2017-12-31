@@ -8,10 +8,18 @@ import sys
 import uaclient
 
 
-def AddtoLog(path, message):
+def AddtoLog(path, message, Action):
 
     f = open(path, "a")
-    f.write(str(time.time())+ ' ' + message) 
+    Entra = False
+    if Action == 'Receive':
+        Message = str(time.time())+ ' Receive ' + message.replace('\r\n', ' ') + '\r\n'
+        Entra = True
+    elif Action == 'Send':
+        Message = str(time.time())+ ' Send ' + message.replace('\r\n', ' ') + '\r\n'
+        Entra = True
+    if Entra:
+        f.write(Message) 
     
 class EchoHandler(socketserver.DatagramRequestHandler):
     """
@@ -38,34 +46,36 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         if DATA[0].split(' ')[0] == 'INVITE':
             self.SafeRTPData(DATA)
             print('Respondiendo a invite')
-            Mess = ' '.join(DATA)
-            Message = 'Received ' + Mess.replace('\r\n', ' ') + '\r\n'
-            AddtoLog(datos[4]['path'], Message)
+            Message = ' '.join(DATA)
+            AddtoLog(datos[4]['path'], Message, 'Receive')
             
             self.wfile.write(b"SIP/2.0 100 Trying\r\n\r\n")
-            Message = 'Sent SIP/2.0 100 Trying\r\n'
-            AddtoLog(datos[4]['path'], Message)
+            Message = 'SIP/2.0 100 Trying\r\n'
+            AddtoLog(datos[4]['path'], Message, 'Send')
             
             self.wfile.write(b"SIP/2.0 180 Ringing\r\n\r\n")
-            Message = 'Sent SIP/2.0 180 Ringing\r\n'
-            AddtoLog(datos[4]['path'], Message)
+            Message = 'SIP/2.0 180 Ringing\r\n'
+            AddtoLog(datos[4]['path'], Message, 'Send')
             
             Message = 'SIP/2.0 200 OK\r\n' + 'Content-Type: application/sdp\r\n\r\n' + 'v=0\r\n' + 'o=' + USER + ' 127.0.0.1\r\n' + 's=misesion\r\n' + 't=0\r\n' + 'm=audio ' + datos[2]['puerto'] + ' RTP\r\n'
             self.wfile.write(bytes(Message, 'utf-8'))
-            Message = 'Received ' + Message.replace('\r\n', ' ') + '\r\n'
-            AddtoLog(datos[4]['path'], Message)
+            AddtoLog(datos[4]['path'], Message, 'Send')
             
         elif DATA[0].split(' ')[0] == 'ACK':
             print('Recibido ACK')
-            Mess = ' '.join(DATA)
-            Message = 'Received ' + Mess.replace('\r\n', ' ') + '\r\n'
-            AddtoLog(datos[4]['path'], Message)
+            Message = ' '.join(DATA)
+            AddtoLog(datos[4]['path'], Message, 'Receive')
             audio = datos[5]['path']
             order = "./mp32rtp -i " + self.ClientIP + " -p " + self.ClientRTPPort + " < " + audio
         elif DATA[0].split(' ')[0] == 'BYE':
             print('Recibido bye')
-            self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+            Message = ' '.join(DATA)
+            AddtoLog(datos[4]['path'], Message, 'Receive')
 
+            self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+            Message = 'Sent SIP/2.0 200 OK\r\n'
+            AddtoLog(datos[4]['path'], Message, 'Send')
+ 
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
     if len(sys.argv) != 2:
