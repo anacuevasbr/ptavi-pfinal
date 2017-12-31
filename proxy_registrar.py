@@ -5,6 +5,7 @@ import socket
 import socketserver
 import sys
 import time
+import uaserver
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 
@@ -42,6 +43,13 @@ def parsercreator(xml):
     parser.parse(open(xml))
     return (proxyhandler.get_tags())
 
+def DataBaseFich(path, DicUsers):
+    
+    f = open(path, "w")
+    
+    for User in DicUsers:
+        Line = DicUsers[User][0] + ': ' + str(DicUsers[User][1]) + ' ' + str(DicUsers[User][2]) + '\r\n'
+        f.write(Line)
 
 class EchoHandler(socketserver.DatagramRequestHandler):
 
@@ -50,7 +58,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     """
     DicUsers = {}  # Aquí se van a guardar los usuarios, es undicconario
                    # de listas donde la clave es el
-                   # nombre de usuario,  y le primer elemento de la lista
+                   # nombre de usuario que tmbien es el lmento 0 e la lista,
+                   # y le primer elemento de la lista
                    # es el puerto en el que escucha y el segundo su
                    # fecha de expiración
 
@@ -58,48 +67,59 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
         Delete = []
         for User in self.DicUsers:
-            if str(self.DicUsers[User][1]) <= str(time.time()):
+            if str(self.DicUsers[User][2]) <= str(time.time()):
                 Delete.append(User)
         for User in Delete:
             del self.DicUsers[User]
             print('eliminado ' + User)
 
     def RegisterManager(self, Data):
-
-        NONCE = b'123456789'
+        
+        datos = parsercreator(sys.argv[1])
+        NONCE = '123456789'
         username = Data[0].split(':')[1]
         serverport = Data[0].split(':')[2].split(' ')[0]
         expires = time.time() + float(Data[1].split(' ')[1].split('\r')[0])
 
         self.ExpiresCheck()
+        DataBaseFich(datos[1]['path'], self.DicUsers)
 
         if username in self.DicUsers:
             self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-            self.DicUsers[username][1] = expires
+            uaserver.AddtoLog(datos[2]['path'], "SIP/2.0 200 OK\r\n\r\n", 'Send')
+            self.DicUsers[username][2] = expires
         else:
             if Data[2].split(':')[0] == 'Authorization':
-                if Data[2].split('=')[1].split('\r')[0] == NONCE.decode('utf-8'):
+                if Data[2].split('=')[1].split('\r')[0] == NONCE:
                     self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-                    self.DicUsers[username] = [serverport, expires]
+                    self.DicUsers[username] = [username, serverport, expires]
+                    DataBaseFich(datos[1]['path'], self.DicUsers)
+                    uaserver.AddtoLog(datos[2]['path'], "SIP/2.0 200 OK\r\n\r\n", 'Send')
+
             else:
-                Message = b"SIP/2.0 401 Unauthorized" + b'\r\n' + b"WWW Authenticate: Digest nonce=" + NONCE
-                self.wfile.write(Message)
+                Message = "SIP/2.0 401 Unauthorized" + '\r\n' + "WWW Authenticate: Digest nonce=" + NONCE
+                self.wfile.write(bytes(Message, 'utf-8'))
+                uaserver.AddtoLog(datos[2]['path'], Message, 'Send')
 
     def ReceiveAnsInvite(self, my_socket):
 
         data = my_socket.recv(1024)
         datadec = data.decode('utf-8')
+        uaserver.AddtoLog(datos[2]['path'], datadec, 'Receive')
         print(datadec)
         if datadec.split(' ')[5] == '200':
             self.wfile.write(data)
+            uaserver.AddtoLog(datos[2]['path'], datadec, 'Send')
 
     def ReceiveAnsBye(self, my_socket):
 
         data = my_socket.recv(1024)
         datadec = data.decode('utf-8')
+        uaserver.AddtoLog(datos[2]['path'], datadec, 'Receive')
         print(datadec)
         if datadec.split(' ')[1] == '200':
             self.wfile.write(data)
+            uaserver.AddtoLog(datos[2]['path'], datadec, 'Send')
 
     def SendtoServer(self, DATA):
         userserv = DATA[0].split(':')[1].split(' ')[0]
@@ -108,6 +128,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             my_socket.connect(('127.0.0.1', int(self.DicUsers[userserv][0])))
 
             Message = ''.join(DATA)
+            uaserver.AddtoLog(datos[2]['path'], Message, 'Send')
+
             my_socket.send(bytes(Message, 'utf-8'))
             if DATA[0].split(' ')[0] == 'INVITE':
                 self.ReceiveAnsInvite(my_socket)
@@ -134,6 +156,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         for line in self.rfile:
             DATA.append(line.decode('utf-8'))
         print(DATA)
+        Message = ' '.join(DATA)
+        uaserver.AddtoLog(datos[2]['path'], Message, 'Receive')
 
         if DATA[0].split(' ')[0] == 'REGISTER':
             self.RegisterManager(DATA)
