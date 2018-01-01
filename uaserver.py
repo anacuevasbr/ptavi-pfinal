@@ -13,10 +13,10 @@ def AddtoLog(path, message, Action):
     f = open(path, "a")
     Entra = False
     if Action == 'Receive':
-        Message = str(time.time())+ ' Receive ' + message.replace('\r\n', ' ') + '\r\n'
+        Message = time.strftime('%Y%m%d%H%M%S',time.gmtime(time.time()))+ ' Receive ' + message.replace('\r\n', ' ') + '\r\n'
         Entra = True
     elif Action == 'Send':
-        Message = str(time.time())+ ' Send ' + message.replace('\r\n', ' ') + '\r\n'
+        Message = time.strftime('%Y%m%d%H%M%S',time.gmtime(time.time())) + ' Send ' + message.replace('\r\n', ' ') + '\r\n'
         Entra = True
     if Entra:
         f.write(Message) 
