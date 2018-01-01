@@ -1,5 +1,5 @@
 <config>
-    <account username="maria" passwd="idhun"/>
+    <account username="sanji@strawhatpirates.com" passwd="allblue"/>
     <uaserver puerto="6003"/>
     <rtpaudio puerto="5061"/>
     <regproxy ip="127.0.0.1" puerto="6001"/>
