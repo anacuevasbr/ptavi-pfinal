@@ -48,7 +48,7 @@ def DataBaseFich(path, DicUsers):
     f = open(path, "w")
     
     for User in DicUsers:
-        Line = DicUsers[User][0] + ': ' + str(DicUsers[User][1]) + ' ' + str(DicUsers[User][2]) + '\r\n'
+        Line = DicUsers[User][0] + ': ' + str(DicUsers[User][1]) + ' ' + time.strftime('%Y%m%d%H%M%S',time.gmtime(DicUsers[User][2])) + '\r\n'
         f.write(Line)
 
 class EchoHandler(socketserver.DatagramRequestHandler):
@@ -125,7 +125,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         userserv = DATA[0].split(':')[1].split(' ')[0]
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
             my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            my_socket.connect(('127.0.0.1', int(self.DicUsers[userserv][0])))
+            my_socket.connect(('127.0.0.1', int(self.DicUsers[userserv][1])))
 
             Message = ''.join(DATA)
             uaserver.AddtoLog(datos[2]['path'], Message, 'Send')
