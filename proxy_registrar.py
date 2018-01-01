@@ -186,5 +186,5 @@ if __name__ == "__main__":
     IP = datos[0]['ip']
     PORT = int(datos[0]['puerto'])
     serv = socketserver.UDPServer((IP, PORT), EchoHandler)
-    print("Lanzando servidor UDP de eco...")
+    print("Server " + datos[0]['name'] + ' listening at port ' + str(PORT))
     serv.serve_forever()
