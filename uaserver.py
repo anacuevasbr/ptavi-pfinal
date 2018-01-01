@@ -57,7 +57,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             Message = 'SIP/2.0 180 Ringing\r\n'
             AddtoLog(datos[4]['path'], Message, 'Send')
             
-            Message = 'SIP/2.0 200 OK\r\n' + 'Content-Type: application/sdp\r\n\r\n' + 'v=0\r\n' + 'o=' + USER + ' 127.0.0.1\r\n' + 's=misesion\r\n' + 't=0\r\n' + 'm=audio ' + datos[2]['puerto'] + ' RTP\r\n'
+            Message = 'SIP/2.0 200 OK\r\n' + 'Content-Type: application/sdp\r\n\r\n' + 'v=0\r\n' + 'o=' + USER + ' 127.0.0.1\r\n' + 's=hungry\r\n' + 't=0\r\n' + 'm=audio ' + datos[2]['puerto'] + ' RTP\r\n'
             self.wfile.write(bytes(Message, 'utf-8'))
             AddtoLog(datos[4]['path'], Message, 'Send')
             
