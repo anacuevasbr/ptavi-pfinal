@@ -1,5 +1,5 @@
 <config>
-    <server name="miservidor" ip="127.0.0.1" puerto="6001"/>
-    <database path="proxy.txt" passwdpath="Ridkulus"/>
+    <server name="goingmerry" ip="127.0.0.1" puerto="6001"/>
+    <database path="proxy.txt" passwdpath="onepiece"/>
     <log path="proxylog.txt"/>
 </config>
