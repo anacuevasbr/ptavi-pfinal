@@ -99,6 +99,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             else:
                 Message = "SIP/2.0 401 Unauthorized" + '\r\n' + "WWW Authenticate: Digest nonce=" + NONCE
                 self.wfile.write(bytes(Message, 'utf-8'))
+                uaserver.AddtoLog(datos[2]['path'], Message, 'Error')
                 uaserver.AddtoLog(datos[2]['path'], Message, 'Send')
 
     def ReceiveAnsInvite(self, my_socket):
@@ -139,15 +140,13 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     def InviteManager(self, DATA):
         print('recibe invite')
         self.ExpiresCheck()
-        if DATA[4].split('=')[1].split(' ')[0] in self.DicUsers:
-            if DATA[0].split(':')[1].split(' ')[0] in self.DicUsers:
-                print('Encontrado servidor')
-                self.SendtoServer(DATA)
-
-            else:
-                self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+        if DATA[4].split('=')[1].split(' ')[0] in self.DicUsers and DATA[0].split(':')[1].split(' ')[0] in self.DicUsers:
+            print('Encontrado servidor')
+            self.SendtoServer(DATA)
         else:
             self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+            Message = "SIP/2.0 404 User Not Found"
+            uaserver.AddtoLog(datos[2]['path'], Message, 'Error')
 
     def handle(self):
 
@@ -174,6 +173,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 self.SendtoServer(DATA)
             else:
                 self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+        else:
+            self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")
 
 
 if __name__ == "__main__":
