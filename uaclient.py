@@ -98,11 +98,15 @@ def ManageInvite(datos):
     data = my_socket.recv(1024).decode('utf-8')
     uaserver.AddtoLog(datos[4]['path'], data, 'Receive')
     print(data)
-    if data.split(' ')[5] == '200':
-        Message = 'ACK sip:' + sys.argv[3] + ' SIP/2.0\r\n\r\n'
-        my_socket.send(bytes(Message, 'utf-8'))
-        uaserver.AddtoLog(datos[4]['path'], Message, 'Send')
-        SendRTP(datos, data)
+    if len(data.split(' '))>6:
+        if data.split(' ')[5] == '200':
+            Message = 'ACK sip:' + sys.argv[3] + ' SIP/2.0\r\n\r\n'
+            my_socket.send(bytes(Message, 'utf-8'))
+            uaserver.AddtoLog(datos[4]['path'], Message, 'Send')
+            SendRTP(datos, data)
+    else:
+        print('Recibido ' + data)
+        uaserver.AddtoLog(datos[4]['path'], data, 'Error')
 
 
 def ManageBye(datos):
@@ -140,11 +144,16 @@ if __name__ == "__main__":
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         my_socket.connect((PROXYIP, PROXYPORT))
-
+        
+        try:
         #Generamos mensajes a partir del método
-        if METHOD == 'REGISTER':
-            ManageRegister(datos)
-        elif METHOD == 'INVITE':
-            ManageInvite(datos)
-        elif METHOD == 'BYE':
-            ManageBye(datos)
+            if METHOD == 'REGISTER':
+                ManageRegister(datos)
+            elif METHOD == 'INVITE':
+                ManageInvite(datos)
+            elif METHOD == 'BYE':
+                ManageBye(datos)
+        except ConnectionRefusedError:
+            Message ='No server listening at ' + PROXYIP + ' port ' + str(PROXYPORT)
+            print(Message)
+            uaserver.AddtoLog(datos[4]['path'], Message, 'Error')
