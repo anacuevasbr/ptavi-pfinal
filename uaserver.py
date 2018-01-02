@@ -11,15 +11,31 @@ import uaclient
 def AddtoLog(path, message, Action):
 
     f = open(path, "a")
-    Entra = False
     if Action == 'Receive':
         Message = time.strftime('%Y%m%d%H%M%S',time.gmtime(time.time()))+ ' Receive ' + message.replace('\r\n', ' ') + '\r\n'
-        Entra = True
     elif Action == 'Send':
         Message = time.strftime('%Y%m%d%H%M%S',time.gmtime(time.time())) + ' Send ' + message.replace('\r\n', ' ') + '\r\n'
-        Entra = True
-    if Entra:
-        f.write(Message) 
+    elif Action == 'Error':
+        Message = time.strftime('%Y%m%d%H%M%S',time.gmtime(time.time())) + ' Error ' + message.replace('\r\n', ' ') + '\r\n'
+    f.write(Message) 
+
+def Valid(message):
+    
+    VAL = False
+    print(message.split(' ')[0])
+    if message.split(' ')[0] == 'INVITE':
+        Length = (len(message.split('\r\n')))>=9
+        Arroba = message.split('\r\n')[4].find('@') != -1
+        if Length and Arroba:
+            VAL = True
+    elif message.split(' ')[0] == 'ACK':
+        print(len(message.split('\r\n')))
+        VAL = True
+    elif message.split(' ')[0] == 'BYE':
+        print(len(message.split('\r\n')))
+        VAL = True
+
+    return VAL
     
 class EchoHandler(socketserver.DatagramRequestHandler):
     """
@@ -42,6 +58,9 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         for line in self.rfile:
             DATA.append(line.decode('utf-8'))
         print(DATA)
+        
+        if not Valid(''.join(DATA)):
+            print('400 bad request')
 
         if DATA[0].split(' ')[0] == 'INVITE':
             self.SafeRTPData(DATA)
@@ -75,6 +94,10 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
             Message = 'Sent SIP/2.0 200 OK\r\n'
             AddtoLog(datos[4]['path'], Message, 'Send')
+        else:
+            self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")
+            Message = "SIP/2.0 405 Method Not Allowed"
+            AddtoLog(datos[4]['path'], Message, 'Error')
  
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
