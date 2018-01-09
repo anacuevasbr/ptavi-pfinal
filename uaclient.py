@@ -50,23 +50,24 @@ def parsercreator(xml):
 def RecieveRegister():
 
     data = my_socket.recv(1024).decode('utf-8')
-
-    if data.split(' ')[1] == '401':
-        
-        uaserver.AddtoLog(datos[4]['path'], data, 'Receive')
-        print('Recibido 401')
-        NONCE = data.split('=')[1]
-        Password = datos[0]['passwd']
-        h = hashlib.sha1(bytes(Password, 'utf-8'))
-        h.update(bytes(NONCE, 'utf-8'))
-        Message = METHOD + ' sip:' 
-        Message += USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n' + 'Authorization: Digest response=' + h.hexdigest() + '\r\n\r\n'
-        my_socket.send(bytes(Message, 'utf-8'))
-        uaserver.AddtoLog(datos[4]['path'], Message, 'Send')
-        RecieveRegister()
-    elif data.split(' ')[1] == '200':
-        print('Recibido 200 ok')
-        uaserver.AddtoLog(datos[4]['path'], data, 'Receive')
+    if data != '':
+        if data.split(' ')[1] == '401':
+            
+            uaserver.AddtoLog(datos[4]['path'], data, 'Receive')
+            print('Recibido 401')
+            NONCE = data.split('=')[1]
+            NONCE = NONCE.split('"')[1]
+            Password = datos[0]['passwd']
+            h = hashlib.sha1(bytes(Password, 'utf-8'))
+            h.update(bytes(NONCE, 'utf-8'))
+            Message = METHOD + ' sip:' 
+            Message += USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n' + 'Authorization: Digest response=' + h.hexdigest() + '\r\n\r\n'
+            my_socket.send(bytes(Message, 'utf-8'))
+            uaserver.AddtoLog(datos[4]['path'], Message, 'Send')
+            RecieveRegister()
+        elif data.split(' ')[1] == '200':
+            print('Recibido 200 ok')
+            uaserver.AddtoLog(datos[4]['path'], data, 'Receive')
 
 def ManageRegister(datos):
 
@@ -102,7 +103,6 @@ def ManageInvite(datos):
     
     data = my_socket.recv(1024).decode('utf-8')
     uaserver.AddtoLog(datos[4]['path'], data, 'Receive')
-    print(data)
     if len(data.split(' '))>6:
         if data.split(' ')[5] == '200':
             Message = 'ACK sip:' + sys.argv[3] + ' SIP/2.0\r\n\r\n'
@@ -120,7 +120,6 @@ def ManageBye(datos):
     my_socket.send(bytes(Message, 'utf-8'))
     uaserver.AddtoLog(datos[4]['path'], Message, 'Send')    
     data = my_socket.recv(1024).decode('utf-8')
-    print(data)
     uaserver.AddtoLog(datos[4]['path'], data, 'Receive')
 
 if __name__ == "__main__":
