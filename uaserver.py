@@ -12,12 +12,13 @@ def AddtoLog(path, message, Action):
 
     f = open(path, "a")
     if Action == 'Receive':
-        Message = time.strftime('%Y%m%d%H%M%S',time.gmtime(time.time()))+ ' Receive ' + message.replace('\r\n', ' ') + '\r\n'
+        Message = time.strftime('%Y%m%d%H%M%S',time.gmtime(time.time()))+ ' Received from ' + message.replace('\r\n', ' ') + '\r\n'
     elif Action == 'Send':
-        Message = time.strftime('%Y%m%d%H%M%S',time.gmtime(time.time())) + ' Send ' + message.replace('\r\n', ' ') + '\r\n'
+        Message = time.strftime('%Y%m%d%H%M%S',time.gmtime(time.time())) + ' Sent to ' + message.replace('\r\n', ' ') + '\r\n'
     elif Action == 'Error':
         Message = time.strftime('%Y%m%d%H%M%S',time.gmtime(time.time())) + ' Error ' + message.replace('\r\n', ' ') + '\r\n'
     f.write(Message) 
+    f.close()
 
 def Valid(message):
     
@@ -64,35 +65,43 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             self.SafeRTPData(DATA)
             print('Respondiendo a invite')
             Message = ' '.join(DATA)
-            AddtoLog(datos[4]['path'], Message, 'Receive')
+            Client = self.client_address[0] + ':' + str(self.client_address[1]) + ' '
+            Client = self.client_address[0] + ':' + str(self.client_address[1]) + ' '
+            AddtoLog(datos[4]['path'], Client + Message, 'Send')
             
             self.wfile.write(b"SIP/2.0 100 Trying\r\n\r\n")
             Message = 'SIP/2.0 100 Trying\r\n'
-            AddtoLog(datos[4]['path'], Message, 'Send')
+            Client = self.client_address[0] + ':' + str(self.client_address[1]) + ' '
+            AddtoLog(datos[4]['path'], Client + Message, 'Send')
             
             self.wfile.write(b"SIP/2.0 180 Ringing\r\n\r\n")
             Message = 'SIP/2.0 180 Ringing\r\n'
-            AddtoLog(datos[4]['path'], Message, 'Send')
+            Client = self.client_address[0] + ':' + str(self.client_address[1]) + ' '
+            AddtoLog(datos[4]['path'], Client + Message, 'Send')
             
             Message = 'SIP/2.0 200 OK\r\n' + 'Content-Type: application/sdp\r\n\r\n' + 'v=0\r\n' + 'o=' + USER + ' 127.0.0.1\r\n' + 's=hungry\r\n' + 't=0\r\n' + 'm=audio ' + datos[2]['puerto'] + ' RTP\r\n'
             self.wfile.write(bytes(Message, 'utf-8'))
-            AddtoLog(datos[4]['path'], Message, 'Send')
+            Client = self.client_address[0] + ':' + str(self.client_address[1]) + ' '
+            AddtoLog(datos[4]['path'], Client + Message, 'Send')
             
         elif DATA[0].split(' ')[0] == 'ACK':
             print('Recibido ACK')
             Message = ' '.join(DATA)
-            AddtoLog(datos[4]['path'], Message, 'Receive')
+            Client = self.client_address[0] + ':' + str(self.client_address[1]) + ' '
+            AddtoLog(datos[4]['path'], Client + Message, 'Receive')
             audio = datos[5]['path']
             order = "./mp32rtp -i " + self.RTPDATA['1'][0] + " -p " + self.RTPDATA['1'][1] + " < " + audio
             os.system(order)
         elif DATA[0].split(' ')[0] == 'BYE':
             print('Recibido bye')
             Message = ' '.join(DATA)
-            AddtoLog(datos[4]['path'], Message, 'Receive')
+            Client = self.client_address[0] + ':' + str(self.client_address[1]) + ' '
+            AddtoLog(datos[4]['path'], Client + Message, 'Receive')
 
             self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
             Message = 'Sent SIP/2.0 200 OK\r\n'
-            AddtoLog(datos[4]['path'], Message, 'Send')
+            Client = self.client_address[0] + ':' + str(self.client_address[1]) + ' '
+            AddtoLog(datos[4]['path'], Client + Message, 'Send')
         else:
             self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")
             Message = "SIP/2.0 405 Method Not Allowed"
