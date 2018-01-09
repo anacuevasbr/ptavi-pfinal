@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import calendar
+import hashlib
 import socket
 import socketserver
 import sys
@@ -63,6 +64,16 @@ def ReadDataBase(path, DicUsers):
         expires = calendar.timegm(time.strptime(t[:-1], '%Y%m%d%H%M%S'))
         DicUsers[user] = [user, port, expires]
 
+def GetPassword(path, Username):
+    f = open(path, "r")
+    lineas= f.readlines()
+    print(Username + 'en get password')
+    for linea in lineas:
+        print(linea.split(' ')[0] + 'dentro del for')
+        if linea.split(' ')[0] == Username:
+            Password = linea.split(' ')[1][:-1]
+            return Password
+
 class EchoHandler(socketserver.DatagramRequestHandler):
 
     """
@@ -107,7 +118,11 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             self.DicUsers[username][2] = expires
         else:
             if Data[2].split(':')[0] == 'Authorization':
-                if Data[2].split('=')[1].split('\r')[0] == NONCE:
+                Password = GetPassword(self.datos[1]['passwdpath'], username)
+                h = hashlib.sha1(bytes(Password, 'utf-8'))
+                h.update(bytes(NONCE, 'utf-8'))
+                print(Password)
+                if Data[2].split('=')[1].split('\r')[0] == h.hexdigest():
                     self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
                     self.DicUsers[username] = [username, serverport, expires]
                     DataBaseFich(self.datos[1]['path'], self.DicUsers)
