@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import hashlib
 import os
 import socket
 import sys
@@ -55,7 +56,11 @@ def RecieveRegister():
         uaserver.AddtoLog(datos[4]['path'], data, 'Receive')
         print('Recibido 401')
         NONCE = data.split('=')[1]
-        Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n' + 'Authorization: Digest response=' + NONCE + '\r\n\r\n'
+        Password = datos[0]['passwd']
+        h = hashlib.sha1(bytes(Password, 'utf-8'))
+        h.update(bytes(NONCE, 'utf-8'))
+        Message = METHOD + ' sip:' 
+        Message += USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n' + 'Authorization: Digest response=' + h.hexdigest() + '\r\n\r\n'
         my_socket.send(bytes(Message, 'utf-8'))
         uaserver.AddtoLog(datos[4]['path'], Message, 'Send')
         RecieveRegister()
