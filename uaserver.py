@@ -57,7 +57,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
         for line in self.rfile:
             DATA.append(line.decode('utf-8'))
-        print(DATA)
 
         if not Valid(''.join(DATA)):
             print('400 bad request')
