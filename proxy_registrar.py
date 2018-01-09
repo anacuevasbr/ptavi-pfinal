@@ -50,7 +50,7 @@ def DataBaseFich(path, DicUsers):
     f = open(path, "w")
     
     for User in DicUsers:
-        Line = DicUsers[User][0] + ': ' + str(DicUsers[User][1]) + ' ' + str(DicUsers[User][2]) + ' ' + str(DicUsers[User][3]) + '\r\n'
+        Line = DicUsers[User][0] + ': ' + str(DicUsers[User][1]) + ' ' + str(DicUsers[User][2]) + ' ' + str(DicUsers[User][3]) + '\r\n' 
         f.write(Line)
 
 def ReadDataBase(path, DicUsers):
