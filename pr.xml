@@ -1,5 +1,5 @@
 <config>
     <server name="goingmerry" ip="127.0.0.1" puerto="6001"/>
-    <database path="proxy.txt" passwdpath="onepiece"/>
+    <database path="proxy.txt" passwdpath="passwords.txt"/>
     <log path="proxylog.txt"/>
 </config>
