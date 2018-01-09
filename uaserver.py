@@ -41,13 +41,12 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     """
     Echo server class
     """
-    ClientIP = ''
-    ClientRTPPort = ''
+    RTPDATA = {}
 
     def SafeRTPData(self, DATA):
-
-        ClientIP = DATA[4].split(' ')[1]
-        ClientRTPPort = DATA[7].split(' ')[1]
+        
+        IP = DATA[4].split(' ')[1]
+        self.RTPDATA['1'] = [IP[0:-1],DATA[7].split(' ')[1]]
 
     def handle(self):
         # Escribe dirección y puerto del cliente (de tupla client_address)
@@ -58,10 +57,9 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         for line in self.rfile:
             DATA.append(line.decode('utf-8'))
         print(DATA)
-        
+
         if not Valid(''.join(DATA)):
             print('400 bad request')
-
         if DATA[0].split(' ')[0] == 'INVITE':
             self.SafeRTPData(DATA)
             print('Respondiendo a invite')
@@ -85,7 +83,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             Message = ' '.join(DATA)
             AddtoLog(datos[4]['path'], Message, 'Receive')
             audio = datos[5]['path']
-            order = "./mp32rtp -i " + self.ClientIP + " -p " + self.ClientRTPPort + " < " + audio
+            order = "./mp32rtp -i " + self.RTPDATA['1'][0] + " -p " + self.RTPDATA['1'][1] + " < " + audio
+            os.system(order)
         elif DATA[0].split(' ')[0] == 'BYE':
             print('Recibido bye')
             Message = ' '.join(DATA)
