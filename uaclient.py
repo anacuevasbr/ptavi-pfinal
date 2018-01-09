@@ -89,6 +89,7 @@ def SendRTP(datos, DATA):
     audio = datos[5]['path']
     order = "./mp32rtp -i " + ServerIP + " -p " + ServerRTPPort + " < " + audio
     os.system(order)
+    uaserver.AddtoLog(datos[4]['path'], 'Enviando RTP', 'Send')
 
 
 def ManageInvite(datos):
