@@ -91,6 +91,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             audio = datos[5]['path']
             order = "./mp32rtp -i " + self.RTPDATA['1'][0] + " -p " + self.RTPDATA['1'][1] + " < " + audio
             os.system(order)
+            AddtoLog(datos[4]['path'], 'Enviando RTP', 'Send')
         elif DATA[0].split(' ')[0] == 'BYE':
             print('Recibido bye')
             Message = ' '.join(DATA)
