@@ -50,7 +50,7 @@ def DataBaseFich(path, DicUsers):
     f = open(path, "w")
     
     for User in DicUsers:
-        Line = DicUsers[User][0] + ': ' + str(DicUsers[User][1]) + ' ' + time.strftime('%Y%m%d%H%M%S',time.gmtime(DicUsers[User][2])) + '\r\n'
+        Line = DicUsers[User][0] + ': ' + str(DicUsers[User][1]) + ' ' + str(DicUsers[User][2]) + ' ' + str(DicUsers[User][3]) + '\r\n'
         f.write(Line)
 
 def ReadDataBase(path, DicUsers):
@@ -60,16 +60,14 @@ def ReadDataBase(path, DicUsers):
     for linea in lineas:
         user = linea.split(':')[0]
         port = linea.split(' ')[1]
-        t = linea.split(' ')[2]
-        expires = calendar.timegm(time.strptime(t[:-1], '%Y%m%d%H%M%S'))
-        DicUsers[user] = [user, port, expires]
+        expires = linea.split(' ')[2]
+        registertime = linea.split(' ')[3].split('\r\n')[0]
+        DicUsers[user] = [user, port, expires, registertime]
 
 def GetPassword(path, Username):
     f = open(path, "r")
     lineas= f.readlines()
-    print(Username + 'en get password')
     for linea in lineas:
-        print(linea.split(' ')[0] + 'dentro del for')
         if linea.split(' ')[0] == Username:
             Password = linea.split(' ')[1][:-1]
             return Password
@@ -103,7 +101,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
     def RegisterManager(self, Data):
         
-        print(self.DicUsers)
         NONCE = '123456789'
         username = Data[0].split(':')[1]
         serverport = Data[0].split(':')[2].split(' ')[0]
@@ -111,6 +108,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
         self.ExpiresCheck()
         DataBaseFich(self.datos[1]['path'], self.DicUsers)
+        print('recibe register')
 
         if username in self.DicUsers:
             self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
@@ -121,15 +119,16 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 Password = GetPassword(self.datos[1]['passwdpath'], username)
                 h = hashlib.sha1(bytes(Password, 'utf-8'))
                 h.update(bytes(NONCE, 'utf-8'))
-                print(Password)
                 if Data[2].split('=')[1].split('\r')[0] == h.hexdigest():
                     self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-                    self.DicUsers[username] = [username, serverport, expires]
+                    self.DicUsers[username] = [username, serverport, expires, time.time()]
                     DataBaseFich(self.datos[1]['path'], self.DicUsers)
                     uaserver.AddtoLog(self.datos[2]['path'], "SIP/2.0 200 OK\r\n\r\n", 'Send')
+                else:
+                    print('fallo en el nonce')
 
             else:
-                Message = "SIP/2.0 401 Unauthorized" + '\r\n' + "WWW Authenticate: Digest nonce=" + NONCE
+                Message = "SIP/2.0 401 Unauthorized" + '\r\n' + 'WWW-Authenticate: Digest nonce="' + NONCE + '"' + '\r\n\r\n'
                 self.wfile.write(bytes(Message, 'utf-8'))
                 uaserver.AddtoLog(self.datos[2]['path'], Message, 'Error')
                 uaserver.AddtoLog(self.datos[2]['path'], Message, 'Send')
@@ -139,7 +138,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         data = my_socket.recv(1024)
         datadec = data.decode('utf-8')
         uaserver.AddtoLog(self.datos[2]['path'], datadec, 'Receive')
-        print(datadec)
         if datadec.split(' ')[5] == '200':
             self.wfile.write(data)
             uaserver.AddtoLog(self.datos[2]['path'], datadec, 'Send')
@@ -149,7 +147,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         data = my_socket.recv(1024)
         datadec = data.decode('utf-8')
         uaserver.AddtoLog(self.datos[2]['path'], datadec, 'Receive')
-        print(datadec)
         if datadec.split(' ')[1] == '200':
             self.wfile.write(data)
             uaserver.AddtoLog(self.datos[2]['path'], datadec, 'Send')
@@ -186,7 +183,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
         for line in self.rfile:
             DATA.append(line.decode('utf-8'))
-        print(DATA)
         Message = ' '.join(DATA)
         uaserver.AddtoLog(self.datos[2]['path'], Message, 'Receive')
 
