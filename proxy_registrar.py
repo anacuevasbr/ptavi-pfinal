@@ -61,7 +61,7 @@ def ReadDataBase(path, DicUsers):
         user = linea.split(':')[0]
         port = linea.split(' ')[1]
         expires = linea.split(' ')[2]
-        registertime = linea.split(' ')[3].split('\r\n')[0]
+        registertime = linea.split(' ')[3].split('\r')[0]
         DicUsers[user] = [user, port, expires, registertime]
 
 def GetPassword(path, Username):
@@ -172,7 +172,16 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
             my_socket.send(bytes(Message, 'utf-8'))
             if DATA[0].split(' ')[0] == 'INVITE':
-                self.ReceiveAnsInvite(my_socket, userserv)
+                try:
+                    self.ReceiveAnsInvite(my_socket, userserv)
+                except ConnectionRefusedError:
+                    print('No server listening at port ' + userserv)
+                    self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+                    Client = self.client_address[0] + ':' + str(self.client_address[1]) + ' '
+                    Message = "SIP/2.0 404 User Not Found"
+                    uaserver.AddtoLog(self.datos[2]['path'], Message, 'Error')
+                    uaserver.AddtoLog(self.datos[2]['path'], Client + Message, 'Send')
+                    
             elif DATA[0].split(' ')[0] == 'BYE':
                 self.ReceiveAnsBye(my_socket, userserv)
 
