@@ -197,7 +197,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 try:
                     self.ReceiveAnsInvite(my_socket, userserv)
                 except ConnectionRefusedError:
-                    print('No server listening at port ' + userserv)
+                    print('No server listening at port ' +
+                          self.DicUsers[userserv][2])
                     self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
                     Client = self.client_address[0] + ':'
                     Client += str(self.client_address[1]) + ' '
