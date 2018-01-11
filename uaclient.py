@@ -60,9 +60,10 @@ def RecieveRegister():
             Password = datos[0]['passwd']
             h = hashlib.sha1(bytes(Password, 'utf-8'))
             h.update(bytes(NONCE, 'utf-8'))
-            Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n'
-            Message += 'Expires: ' + sys.argv[3] + '\r\n'
-            Message += 'Authorization: Digest response=' + h.hexdigest() + '\r\n\r\n'
+            Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT)
+            Message += ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n'
+            Message += 'Authorization: Digest response=' + h.hexdigest()
+            Message += '\r\n\r\n'
             my_socket.send(bytes(Message, 'utf-8'))
             uaserver.AddtoLog(datos[4]['path'], Server + Message, 'Send')
             RecieveRegister()
@@ -75,17 +76,18 @@ def RecieveRegister():
             print('Recubido 400')
             uaserver.AddtoLog(datos[4]['path'], Server + data, 'Receive')
 
+
 def ManageRegister(datos):
 
     USER = datos[0]['username']
     SERVERPORT = int(datos[1]['puerto'])
 
-    Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT) + ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n\r\n'
+    Message = METHOD + ' sip:' + USER + ':' + str(SERVERPORT)
+    Message += ' SIP/2.0\r\n' + 'Expires: ' + sys.argv[3] + '\r\n\r\n'
 
     my_socket.send(bytes(Message, 'utf-8'))
     Server = datos[3]['ip'] + ':' + datos[3]['puerto'] + ' '
     uaserver.AddtoLog(datos[4]['path'], Server + Message, 'Send')
-    #Recibimos respuesta
     RecieveRegister()
 
 
@@ -107,15 +109,18 @@ def ManageInvite(datos):
     USER = datos[0]['username']
     SERVERPORT = int(datos[1]['puerto'])
 
-    Message = 'INVITE sip:' + sys.argv[3] + ' SIP/2.0\r\n' + 'Content-Type: application/sdp\r\n\r\n' + 'v=0\r\n' + 'o=' + USER + ' 127.0.0.1\r\n' + 's=hungry\r\n' + 't=0\r\n' + 'm=audio ' + datos[2]['puerto'] + ' RTP\r\n'
+    Message = 'INVITE sip:' + sys.argv[3] + ' SIP/2.0\r\n'
+    Message += 'Content-Type: application/sdp\r\n\r\n' + 'v=0\r\n'
+    Message += 'o=' + USER + ' 127.0.0.1\r\n' + 's=hungry\r\n'
+    Message += 't=0\r\n' + 'm=audio ' + datos[2]['puerto'] + ' RTP\r\n'
 
     my_socket.send(bytes(Message, 'utf-8'))
     Server = datos[3]['ip'] + ':' + datos[3]['puerto'] + ' '
     uaserver.AddtoLog(datos[4]['path'], Server + Message, 'Send')
-    
+
     data = my_socket.recv(1024).decode('utf-8')
     uaserver.AddtoLog(datos[4]['path'], Server + data, 'Receive')
-    if len(data.split(' '))>6:
+    if len(data.split(' ')) > 6:
         if data.split(' ')[5] == '200':
             Message = 'ACK sip:' + sys.argv[3] + ' SIP/2.0\r\n\r\n'
             my_socket.send(bytes(Message, 'utf-8'))
@@ -127,11 +132,11 @@ def ManageInvite(datos):
 
 
 def ManageBye(datos):
-    
+
     Message = 'BYE sip:' + sys.argv[3] + ' SIP/2.0\r\n\r\n'
     my_socket.send(bytes(Message, 'utf-8'))
     Server = datos[3]['ip'] + ':' + datos[3]['puerto'] + ' '
-    uaserver.AddtoLog(datos[4]['path'], Server + Message, 'Send')    
+    uaserver.AddtoLog(datos[4]['path'], Server + Message, 'Send')
     data = my_socket.recv(1024).decode('utf-8')
     uaserver.AddtoLog(datos[4]['path'], Server + data, 'Receive')
 
@@ -144,7 +149,6 @@ if __name__ == "__main__":
 
     datos = parsercreator(sys.argv[1])
 
-    #Separramos las variables que necesitamos
     USER = datos[0]['username']
     PASSWORD = datos[0]['passwd']
     METHOD = sys.argv[2]
@@ -152,7 +156,7 @@ if __name__ == "__main__":
     if SERVERIP == '':
         SERVERIP = '127.0.0.1'
     SERVERPORT = int(datos[1]['puerto'])
-    PROXYIP= datos[3]['ip']
+    PROXYIP = datos[3]['ip']
     if PROXYIP == '':
         PROXYIP = '127.0.0.1'
     PROXYPORT = int(datos[3]['puerto'])
@@ -161,9 +165,9 @@ if __name__ == "__main__":
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         my_socket.connect((PROXYIP, PROXYPORT))
-        
+
         try:
-        #Generamos mensajes a partir del método
+
             if METHOD == 'REGISTER':
                 ManageRegister(datos)
             elif METHOD == 'INVITE':
@@ -171,6 +175,7 @@ if __name__ == "__main__":
             elif METHOD == 'BYE':
                 ManageBye(datos)
         except ConnectionRefusedError:
-            Message ='No server listening at ' + PROXYIP + ' port ' + str(PROXYPORT)
+            Message = 'No server listening at ' + PROXYIP
+            Message += ' port ' + str(PROXYPORT)
             print(Message)
             uaserver.AddtoLog(datos[4]['path'], Message, 'Error')
