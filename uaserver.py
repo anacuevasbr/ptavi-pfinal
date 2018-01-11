@@ -104,7 +104,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 order = "./mp32rtp -i " + self.RTPDATA['1'][0]
                 order += " -p " + self.RTPDATA['1'][1] + " < " + audio
                 os.system(order)
-                print(self.RTPDATA['1'][0])
                 Client = self.RTPDATA['1'][0] + ':'
                 Client += self.RTPDATA['1'][1] + ' '
                 AddtoLog(datos[4]['path'], Client + 'Enviando RTP', 'Send')
