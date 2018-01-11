@@ -102,54 +102,63 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     def RegisterManager(self, Data):
         
         NONCE = '123456789'
-        username = Data[0].split(':')[1]
-        serverport = Data[0].split(':')[2].split(' ')[0]
-        expires = time.time() + float(Data[1].split(' ')[1].split('\r')[0])
-
-        self.ExpiresCheck()
-        DataBaseFich(self.datos[1]['path'], self.DicUsers)
-        print('recibe register')
-
-        if username in self.DicUsers:
-            self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-            uaserver.AddtoLog(self.datos[2]['path'], "SIP/2.0 200 OK\r\n\r\n", 'Send')
-            self.DicUsers[username][2] = expires
+        if len(Data)<3:
+            self.wfile.write(b'SIP/2.0 400 Bad Request')
         else:
-            if Data[2].split(':')[0] == 'Authorization':
-                Password = GetPassword(self.datos[1]['passwdpath'], username)
-                h = hashlib.sha1(bytes(Password, 'utf-8'))
-                h.update(bytes(NONCE, 'utf-8'))
-                if Data[2].split('=')[1].split('\r')[0] == h.hexdigest():
-                    self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-                    self.DicUsers[username] = [username, serverport, expires, time.time()]
-                    DataBaseFich(self.datos[1]['path'], self.DicUsers)
-                    uaserver.AddtoLog(self.datos[2]['path'], "SIP/2.0 200 OK\r\n\r\n", 'Send')
-                else:
-                    print('fallo en el nonce')
+            username = Data[0].split(':')[1]
+            serverport = Data[0].split(':')[2].split(' ')[0]
+            expires = time.time() + float(Data[1].split(' ')[1].split('\r')[0])
+            Client = self.client_address[0] + ':' + str(self.client_address[1]) + ' '
+            self.ExpiresCheck()
+            DataBaseFich(self.datos[1]['path'], self.DicUsers)
+            print('recibe register')
 
+            if username in self.DicUsers:
+                self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+                uaserver.AddtoLog(self.datos[2]['path'], Client + "SIP/2.0 200 OK\r\n\r\n", 'Send')
+                self.DicUsers[username][2] = expires
             else:
-                Message = "SIP/2.0 401 Unauthorized" + '\r\n' + 'WWW-Authenticate: Digest nonce="' + NONCE + '"' + '\r\n\r\n'
-                self.wfile.write(bytes(Message, 'utf-8'))
-                uaserver.AddtoLog(self.datos[2]['path'], Message, 'Error')
-                uaserver.AddtoLog(self.datos[2]['path'], Message, 'Send')
+                if Data[2].split(':')[0] == 'Authorization':
+                    Password = GetPassword(self.datos[1]['passwdpath'], username)
+                    h = hashlib.sha1(bytes(Password, 'utf-8'))
+                    h.update(bytes(NONCE, 'utf-8'))
+                    if Data[2].split('=')[1].split('\r')[0] == h.hexdigest():
+                        self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+                        self.DicUsers[username] = [username, serverport, expires, time.time()]
+                        DataBaseFich(self.datos[1]['path'], self.DicUsers)
+                        uaserver.AddtoLog(self.datos[2]['path'], Client + "SIP/2.0 200 OK\r\n\r\n", 'Send')
+                    else:
+                        print('fallo en el nonce')
 
-    def ReceiveAnsInvite(self, my_socket):
+                else:
+                    Message = "SIP/2.0 401 Unauthorized" + '\r\n' + 'WWW-Authenticate: Digest nonce="' + NONCE + '"' + '\r\n\r\n'
+                    self.wfile.write(bytes(Message, 'utf-8'))
+                    uaserver.AddtoLog(self.datos[2]['path'], Message, 'Error')
+                    uaserver.AddtoLog(self.datos[2]['path'], Client + Message, 'Send')
+
+    def ReceiveAnsInvite(self, my_socket, user):
 
         data = my_socket.recv(1024)
         datadec = data.decode('utf-8')
-        uaserver.AddtoLog(self.datos[2]['path'], datadec, 'Receive')
+        Server = '127.0.0.1:' + self.DicUsers[user][1] + ' '
+        uaserver.AddtoLog(self.datos[2]['path'], Server + datadec, 'Receive')
         if datadec.split(' ')[5] == '200':
             self.wfile.write(data)
-            uaserver.AddtoLog(self.datos[2]['path'], datadec, 'Send')
+            uaserver.AddtoLog(self.datos[2]['path'], Server + datadec, 'Send')
+        else:
+            print('Recibido 400')
 
-    def ReceiveAnsBye(self, my_socket):
+    def ReceiveAnsBye(self, my_socket, user):
 
         data = my_socket.recv(1024)
         datadec = data.decode('utf-8')
-        uaserver.AddtoLog(self.datos[2]['path'], datadec, 'Receive')
+        Server = '127.0.0.1:' + self.DicUsers[user][1] + ' '
+        uaserver.AddtoLog(self.datos[2]['path'], Server + datadec, 'Receive')
         if datadec.split(' ')[1] == '200':
             self.wfile.write(data)
-            uaserver.AddtoLog(self.datos[2]['path'], datadec, 'Send')
+            uaserver.AddtoLog(self.datos[2]['path'], Server + datadec, 'Send')
+        else:
+            print('Recibido 400')
 
     def SendtoServer(self, DATA):
         userserv = DATA[0].split(':')[1].split(' ')[0]
@@ -158,13 +167,14 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             my_socket.connect(('127.0.0.1', int(self.DicUsers[userserv][1])))
 
             Message = ''.join(DATA)
-            uaserver.AddtoLog(self.datos[2]['path'], Message, 'Send')
+            Server = '127.0.0.1:' + self.DicUsers[userserv][1] + ' '
+            uaserver.AddtoLog(self.datos[2]['path'], Server + Message, 'Send')
 
             my_socket.send(bytes(Message, 'utf-8'))
             if DATA[0].split(' ')[0] == 'INVITE':
-                self.ReceiveAnsInvite(my_socket)
+                self.ReceiveAnsInvite(my_socket, userserv)
             elif DATA[0].split(' ')[0] == 'BYE':
-                self.ReceiveAnsBye(my_socket)
+                self.ReceiveAnsBye(my_socket, userserv)
 
     def InviteManager(self, DATA):
         print('recibe invite')
@@ -174,8 +184,10 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             self.SendtoServer(DATA)
         else:
             self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+            Client = self.client_address[0] + ':' + str(self.client_address[1]) + ' '
             Message = "SIP/2.0 404 User Not Found"
             uaserver.AddtoLog(self.datos[2]['path'], Message, 'Error')
+            uaserver.AddtoLog(self.datos[2]['path'], Client + Message, 'Send')
 
     def handle(self):
 
@@ -184,7 +196,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         for line in self.rfile:
             DATA.append(line.decode('utf-8'))
         Message = ' '.join(DATA)
-        uaserver.AddtoLog(self.datos[2]['path'], Message, 'Receive')
+        Client = self.client_address[0] + ':' + str(self.client_address[1]) + ' '
+        uaserver.AddtoLog(self.datos[2]['path'], Client + Message, 'Receive')
 
         if DATA[0].split(' ')[0] == 'REGISTER':
             self.RegisterManager(DATA)
@@ -195,15 +208,23 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 self.SendtoServer(DATA)
             else:
                 self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+                Message = "SIP/2.0 404 User Not Found"
+                uaserver.AddtoLog(self.datos[2]['path'], Message, 'Error')
+                uaserver.AddtoLog(self.datos[2]['path'], Client + Message, 'Send')
 
         elif DATA[0].split(' ')[0] == 'BYE':
             if DATA[0].split(':')[1].split(' ')[0] in self.DicUsers:
                 self.SendtoServer(DATA)
             else:
                 self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+                Message = "SIP/2.0 404 User Not Found"
+                uaserver.AddtoLog(self.datos[2]['path'], Message, 'Error')
+                uaserver.AddtoLog(self.datos[2]['path'], Client + Message, 'Send')
         else:
             self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")
-
+            Message = "SIP/2.0 405 Method Not Allowed"
+            uaserver.AddtoLog(self.datos[2]['path'], Message, 'Error')
+            uaserver.AddtoLog(self.datos[2]['path'], Client + Message, 'Send')
 
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
@@ -211,9 +232,13 @@ if __name__ == "__main__":
         sys.exit('Usage: python3 uaserver.py config')
 
     datos = parsercreator(sys.argv[1])
-
+    uaserver.AddtoLog(datos[2]['path'], 'Starting...', 'Status')
     IP = datos[0]['ip']
     PORT = int(datos[0]['puerto'])
     serv = socketserver.UDPServer((IP, PORT), EchoHandler)
     print("Server " + datos[0]['name'] + ' listening at port ' + str(PORT))
-    serv.serve_forever()
+    try:
+        serv.serve_forever()
+    except KeyboardInterrupt:
+        print('Cerrando servidor')
+        uaserver.AddtoLog(datos[2]['path'], 'Finshing.', 'Status')        
