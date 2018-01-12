@@ -213,7 +213,9 @@ class EchoHandler(socketserver.DatagramRequestHandler):
     def InviteManager(self, DATA):
         print('recibe invite')
         self.ExpiresCheck()
-        if DATA[4].split('=')[1].split(' ')[0] in self.DicUsers and DATA[0].split(':')[1].split(' ')[0] in self.DicUsers:
+        Clientin = DATA[4].split('=')[1].split(' ')[0] in self.DicUsers
+        Serverin = DATA[0].split(':')[1].split(' ')[0] in self.DicUsers
+        if Clientin and Serverin:
 
             self.SendtoServer(DATA)
         else:
