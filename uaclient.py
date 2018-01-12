@@ -98,9 +98,10 @@ def SendRTP(datos, DATA):
     audio = datos[5]['path']
     order = "./mp32rtp -i " + ServerIP + " -p " + ServerRTPPort + " < " + audio
     os.system(order)
+    order = "cvlc rtp://@127.0.0.1:" + datos[2]['puerto']
+    os.system(order)
     Server = ServerIP + ':'
     Server += ServerRTPPort + ' '
-
     uaserver.AddtoLog(datos[4]['path'], Server + 'Enviando RTP', 'Send')
 
 
