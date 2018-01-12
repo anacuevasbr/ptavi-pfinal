@@ -70,6 +70,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         USER = datos[0]['username']
 
         for line in self.rfile:
+
             DATA.append(line.decode('utf-8'))
 
         if Valid(''.join(DATA)):
