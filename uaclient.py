@@ -121,6 +121,7 @@ def ManageInvite(datos):
     data = my_socket.recv(1024).decode('utf-8')
     uaserver.AddtoLog(datos[4]['path'], Server + data, 'Receive')
     if len(data.split(' ')) > 6:
+
         if data.split(' ')[5] == '200':
             Message = 'ACK sip:' + sys.argv[3] + ' SIP/2.0\r\n\r\n'
             my_socket.send(bytes(Message, 'utf-8'))
