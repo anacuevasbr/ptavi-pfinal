@@ -1,0 +1,9 @@
+1. Sobre el cvlc: no se escucha ya que para cuando recibe la orden de escuchar 
+ya ha terminado de recibir, si por ejemplo en el cliente no ejecutas la orden de enviar
+rtp se pone aescuchar directamente y si que se escucha la cancion que
+manda el servidor.
+
+2. Sobre la consistencia frente a valores erróneos: Se han implementado algunas
+de las sugerencias, por ejemplo comprueba que el que hace el invite y el está
+registrado, algunas de las sugerencias estan implementas en los uas, por 
+ejemplo el uaserver compruba que todos los mensajes que recibe son SIP/2.0
