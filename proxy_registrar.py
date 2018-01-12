@@ -163,7 +163,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         datadec = data.decode('utf-8')
         Server = self.DicUsers[user][1] + self.DicUsers[user][2] + ' '
         uaserver.AddtoLog(self.datos[2]['path'], Server + datadec, 'Receive')
-        if datadec.split(' ')[5] == '200':
+        if len(datadec.split(' ')) > 4 and datadec.split(' ')[5] == '200':
             self.wfile.write(data)
             uaserver.AddtoLog(self.datos[2]['path'], Server + datadec, 'Send')
         else:
@@ -214,7 +214,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         print('recibe invite')
         self.ExpiresCheck()
         if DATA[4].split('=')[1].split(' ')[0] in self.DicUsers and DATA[0].split(':')[1].split(' ')[0] in self.DicUsers:
-            print('Encontrado servidor')
+
             self.SendtoServer(DATA)
         else:
             self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
