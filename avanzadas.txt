@@ -1,1 +1,3 @@
 Reestablecer usuarios conectados
+Integración de (c)vlc con hilos
+Consistencia frente a valores erróneos
